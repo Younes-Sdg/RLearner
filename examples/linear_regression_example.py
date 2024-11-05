@@ -1,23 +1,46 @@
-# Example usage
 import numpy as np
-from rlearner.linear_model import LinearModelRL , Policy
+from rlearner.models.linear_model import LinearModelRL
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
 
 np.random.seed(42)
-X = np.random.randn(1000, 2)
-true_weights = np.array([0.5, -0.8])
-y = X.dot(true_weights) + np.random.randn(1000) * 0.1
+X = np.random.rand(100, 1) * 10
+y = 2.5 * X.flatten() + np.random.randn(100) * 2
 
- 
-print("\nGradient Policy:")
-model_grad = LinearModelRL(learning_rate=0.1, policy=Policy.GRADIENT)
-model_grad.fit(X, y)
-print("True weights:", true_weights)
-print("Found weights:", model_grad.weights)
-print("Final MSE:", np.mean((model_grad.predict(X) - y) ** 2))
 
-print("\nDirect RL Policy:")
-model_direct = LinearModelRL(learning_rate=0.1, policy=Policy.DIRECT)
-model_direct.fit(X, y)
-print("True weights:", true_weights)
-print("Found weights:", model_direct.weights)
-print("Final MSE:", np.mean((model_direct.predict(X) - y) ** 2))
+model_rl = LinearModelRL(
+    learning_rate=0.01,
+    max_steps=5000,
+    mse_threshold=0.001,
+    n_features=X.shape[1]
+)
+
+# Fit the RL model
+model_rl.fit(X, y)
+
+# Make predictions with the RL model
+predictions_rl = model_rl.predict(X)
+
+# Calculate metrics for RL model
+mse_rl = mean_squared_error(y, predictions_rl)
+r2_rl = r2_score(y, predictions_rl)
+
+print("Reinforcement Learning Model Results:")
+print(f"MSE: {mse_rl:.4f}")
+print(f"R² Score: {r2_rl:.4f}")
+print("Model Weights:", model_rl.get_weights())
+
+# Create and train the sklearn Linear Regression model
+model_lr = LinearRegression()
+model_lr.fit(X, y)
+predictions_lr = model_lr.predict(X)
+
+# Calculate metrics for sklearn model
+mse_lr = mean_squared_error(y, predictions_lr)
+r2_lr = r2_score(y, predictions_lr)
+
+print("\nLinear Regression Model Results:")
+print(f"MSE: {mse_lr:.4f}")
+print(f"R² Score: {r2_lr:.4f}")
+print("Model Weights:", model_lr.coef_)
