@@ -19,10 +19,10 @@ model_rl = LinearModelRL(
 # Fit the RL model
 model_rl.fit(X, y)
 
-# Make predictions with the RL model
+# Make predictions 
 predictions_rl = model_rl.predict(X)
 
-# Calculate metrics for RL model
+
 mse_rl = mean_squared_error(y, predictions_rl)
 r2_rl = r2_score(y, predictions_rl)
 
@@ -31,12 +31,12 @@ print(f"MSE: {mse_rl:.4f}")
 print(f"R² Score: {r2_rl:.4f}")
 print("Model Weights:", model_rl.get_weights())
 
-# Create and train the sklearn Linear Regression model
+
 model_lr = LinearRegression()
 model_lr.fit(X, y)
 predictions_lr = model_lr.predict(X)
 
-# Calculate metrics for sklearn model
+
 mse_lr = mean_squared_error(y, predictions_lr)
 r2_lr = r2_score(y, predictions_lr)
 

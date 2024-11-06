@@ -17,12 +17,13 @@ class RegressionEnvironmentRL(BaseEnvironment):
         self.y = None
         self.best_mse = float('inf')
         self.best_weights = None
-
+        self.episode_history = []
+        
     def set_data(self, X: np.ndarray, y: np.ndarray) -> None:
         """Set the training data for the environment."""
         self.X = X
         self.y = y
-        self.weights = np.random.randn(X.shape[1]) * 0.01  
+        self.weights = np.random.randn(X.shape[1]) * 0.01
         self.best_weights = self.weights.copy()
         self.best_mse = self.get_mse()
 
@@ -48,33 +49,42 @@ class RegressionEnvironmentRL(BaseEnvironment):
             tuple: (state, reward, done)
         """
         old_mse = self.get_mse()
-        self.weights += action  # Apply the weight update (action is negative gradient)
+        self.weights += action
         new_mse = self.get_mse()
-
-        # Reward structure: proportional to improvement in MSE
-        reward = old_mse - new_mse  # Encourage reduction in MSE
-        reward = max(reward, 0)  # Ensure reward is non-negative
-
-        done = new_mse < self.mse_threshold  
         
-        # Update best weights if new MSE is better
+        self.episode_history.append(new_mse)
+        
+        # simplified : avoid overflow
+        improvement = old_mse - new_mse
+        
+        # Scale improvement to reasonable range
+        reward = np.clip(improvement, -1.0, 1.0)
+        
+        # Add small bonus for finding new best MSE
         if new_mse < self.best_mse:
+            reward += 0.1
             self.best_mse = new_mse
             self.best_weights = self.weights.copy()
         
+        # Terminate if solved or diverging
+        done = new_mse < self.mse_threshold or new_mse > 10 * old_mse
+        
         state = {
-            'weights': self.weights,
+            'weights': self.weights.copy(),
             'mse': new_mse,
             'gradient': self.get_gradient(),
             'best_mse': self.best_mse
         }
+        
         return state, reward, done
 
     def reset(self) -> dict:
         """Reset the environment to initial state."""
         self.weights = np.random.randn(self.X.shape[1]) * 0.01 if self.X is not None else None
+        self.episode_history = []
+        
         return {
-            'weights': self.weights,
+            'weights': self.weights.copy(),
             'mse': self.get_mse(),
             'gradient': self.get_gradient(),
             'best_mse': self.best_mse
@@ -82,8 +92,8 @@ class RegressionEnvironmentRL(BaseEnvironment):
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Make predictions using the current weights."""
-        return X.dot(self.weights)
+        return X.dot(self.best_weights if self.best_weights is not None else self.weights)
 
     def get_weights(self) -> np.ndarray:
         """Get the current weights of the model."""
-        return self.weights
+        return self.best_weights if self.best_weights is not None else self.weights

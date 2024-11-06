@@ -1,6 +1,6 @@
 from rlearner.base import BaseModel
 from ..environments.regression import RegressionEnvironmentRL
-from ..policies import GradientPolicy
+from ..policies.linear_model_policies import GradientPolicy
 import numpy as np
 
 class LinearModelRL(BaseModel):
